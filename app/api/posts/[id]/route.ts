@@ -2,6 +2,7 @@ import { connectDB } from '@/lib/mongodb';
 import Post from '@/models/Post';
 import { NextResponse } from 'next/server';
 
+// DELETE post
 export async function DELETE(
   req: Request,
   { params }: { params: { id: string } }
@@ -16,6 +17,7 @@ export async function DELETE(
   }
 }
 
+// UPDATE post
 export async function PUT(
   req: Request,
   { params }: { params: { id: string } }
@@ -33,4 +35,12 @@ export async function PUT(
   } catch (err) {
     return NextResponse.json({ error: 'Update failed' }, { status: 500 });
   }
+}
+
+// OPTIONAL: add this if needed to prevent route errors
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  return NextResponse.json({ message: 'GET not implemented' });
 }
