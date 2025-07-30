@@ -16,7 +16,7 @@ export default function HomePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
+  // const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -24,15 +24,15 @@ export default function HomePage() {
     }
   }, [status, router]);
 
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      const res = await fetch('/api/notifications/unread');
-      const data = await res.json();
-      setUnreadCount(data.count || 0);
-    };
+  // useEffect(() => {
+  //   const fetchNotifications = async () => {
+  //     const res = await fetch('/api/notifications/unread');
+  //     const data = await res.json();
+  //     setUnreadCount(data.count || 0);
+  //   };
 
-    if (session?.user?.email) fetchNotifications();
-  }, [session]);
+  //   if (session?.user?.email) fetchNotifications();
+  // }, [session]);
 
   if (status === 'loading') return <p className="text-center text-gray-500">Loading...</p>;
   if (!session) return null;
@@ -55,7 +55,7 @@ export default function HomePage() {
         <ChatButton/>
       </div>
 
-      <StoryUploader userId={session?.user?.email!} />
+      {session?.user?.email && <StoryUploader userId={session.user.email} />}
       <Stories />
 
       <div className="flex justify-between items-center">

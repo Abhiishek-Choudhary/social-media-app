@@ -1,14 +1,14 @@
-import { NextResponse, NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/authOptions";
 import Story from "@/models/Story";
 import User, { IUser } from "@/models/User";
 
 // POST: Create a story
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   await connectDB();
-  const { userId, mediaUrl, mediaType } = await req.json();
+  const { userId, mediaUrl, mediaType } = await request.json();
 
   if (!userId || !mediaUrl || !mediaType) {
     return NextResponse.json({ error: "Missing data" }, { status: 400 });
@@ -32,20 +32,22 @@ export async function POST(req: Request) {
 }
 
 // GET: Fetch followed users' non-expired stories (and user's own)
-export const GET = async (req: NextRequest) => {
+export async function GET() {
   try {
     await connectDB();
-    const session = await getServerSession(authOptions);
-    if (!session)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const user = await User.findOne({ email: session?.user?.email }).lean() as IUser | null;
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const user = await User.findOne({ email: session.user?.email }).lean() as IUser | null;
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const followedEmails = [...(user.followers || []), user.email]; // Include user's own stories
+    const followedEmails = [...(user.followers || []), user.email];
 
     const stories = await Story.find({
       userId: { $in: followedEmails },
@@ -54,7 +56,6 @@ export const GET = async (req: NextRequest) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    // Get user info for each story
     const userMap = await User.find({
       email: { $in: followedEmails },
     }).lean();
@@ -74,8 +75,8 @@ export const GET = async (req: NextRequest) => {
     }));
 
     return NextResponse.json(enrichedStories);
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error("Error loading stories:", error);
     return NextResponse.json({ error: "Failed to load stories" }, { status: 500 });
   }
-};
+}

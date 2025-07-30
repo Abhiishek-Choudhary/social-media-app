@@ -1,8 +1,8 @@
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/authOptions";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
-import Post from "@/models/Post";
+// import Post from "@/models/Post";
 import ProfileUI from "@/components/ProfileUI";
 
 export default async function UserProfilePage({ params }: { params: { email: string } }) {

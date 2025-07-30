@@ -1,52 +1,81 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 
-export default function PostItem({
-  post,
-  sessionEmail,
-  onUpdate,
-}: {
-  post: any;
+interface Comment {
+  userId: string;
+  text: string;
+}
+
+interface Post {
+  _id: string;
+  userId: string;
+  content: string;
+  image?: string;
+  video?: string;
+  createdAt: string;
+  likes: number;
+  comments: Comment[];
+}
+
+interface PostItemProps {
+  post: Post;
   sessionEmail: string;
   onUpdate?: () => void;
-}) {
+}
+
+export default function PostItem({ post, sessionEmail, onUpdate }: PostItemProps): JSX.Element {
   const [editing, setEditing] = useState(false);
   const [newContent, setNewContent] = useState(post.content);
   const [commentText, setCommentText] = useState('');
-  const [showComments, setShowComments] = useState(false); // 👈 toggle comments section
+  const [showComments, setShowComments] = useState(false);
 
   const deletePost = async () => {
-    await fetch(`/api/posts/${post._id}`, { method: 'DELETE' });
-    onUpdate?.();
+    try {
+      await fetch(`/api/posts/${post._id}`, { method: 'DELETE' });
+      onUpdate?.();
+    } catch (error) {
+      console.error('Failed to delete post:', error);
+    }
   };
 
   const updatePost = async () => {
-    await fetch(`/api/posts/${post._id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: newContent }),
-    });
-    setEditing(false);
-    onUpdate?.();
+    try {
+      await fetch(`/api/posts/${post._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: newContent }),
+      });
+      setEditing(false);
+      onUpdate?.();
+    } catch (error) {
+      console.error('Failed to update post:', error);
+    }
   };
 
   const handleLike = async () => {
-    await fetch(`/api/posts/${post._id}/like`, { method: 'POST' });
-    onUpdate?.();
+    try {
+      await fetch(`/api/posts/${post._id}/like`, { method: 'POST' });
+      onUpdate?.();
+    } catch (error) {
+      console.error('Failed to like post:', error);
+    }
   };
 
   const handleComment = async () => {
     if (!commentText.trim()) return;
-
-    await fetch(`/api/posts/${post._id}/comment`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: sessionEmail, text: commentText }),
-    });
-
-    setCommentText('');
-    onUpdate?.();
+    try {
+      await fetch(`/api/posts/${post._id}/comment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: sessionEmail, text: commentText }),
+      });
+      setCommentText('');
+      onUpdate?.();
+    } catch (error) {
+      console.error('Failed to comment:', error);
+    }
   };
 
   return (
@@ -78,11 +107,14 @@ export default function PostItem({
           <p className="mb-2">{post.content}</p>
 
           {post.image && (
-            <img
-              src={post.image}
-              alt="Post"
-              className="mt-2 max-h-[400px] object-cover rounded w-full"
-            />
+            <div className="relative w-full h-72 mt-2 rounded overflow-hidden">
+              <Image
+                src={post.image}
+                alt="Post Image"
+                fill
+                className="object-cover"
+              />
+            </div>
           )}
 
           {post.video && (
@@ -113,12 +145,11 @@ export default function PostItem({
             </button>
           </div>
 
-          {/* Show comment section only if toggled */}
           {showComments && (
             <div className="mt-4">
               <div className="mb-2 space-y-2 text-sm text-gray-700">
                 {post.comments?.length ? (
-                  post.comments.map((comment: any, index: number) => (
+                  post.comments.map((comment, index) => (
                     <p key={index}>
                       <strong>{comment.userId}:</strong> {comment.text}
                     </p>

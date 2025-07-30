@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
+import { Loader2, Upload } from "lucide-react";
 
 interface PostFormProps {
   onPostSuccess?: () => void;
@@ -24,11 +26,14 @@ export default function PostForm({ onPostSuccess }: PostFormProps) {
       const url = URL.createObjectURL(file);
       setPreviewURL(url);
 
-      return () => URL.revokeObjectURL(url); // clean up
+      return () => URL.revokeObjectURL(url);
     }
   }, [file]);
 
-  const handleUpload = async (): Promise<{ image?: string; video?: string } | null> => {
+  const handleUpload = async (): Promise<{
+    image?: string;
+    video?: string;
+  } | null> => {
     if (!file) return null;
 
     const formData = new FormData();
@@ -100,36 +105,50 @@ export default function PostForm({ onPostSuccess }: PostFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-4 rounded shadow mb-4">
+    <form
+      onSubmit={handleSubmit}
+      className="bg-white p-6 rounded-xl shadow-md border space-y-4"
+    >
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder="What's on your mind?"
-        className="w-full border p-2 rounded resize-none min-h-[80px]"
+        className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none min-h-[100px]"
       />
 
+      {/* File Input */}
+      <label
+        htmlFor="media-upload"
+        className="flex items-center gap-2 cursor-pointer w-fit bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-md transition"
+      >
+        <Upload className="w-4 h-4" />
+        {file ? file.name : "Upload Image or Video"}
+      </label>
       <input
+        id="media-upload"
         type="file"
         accept="image/*,video/*"
         onChange={(e) => setFile(e.target.files?.[0] || null)}
-        className="w-full mt-2"
+        className="hidden"
       />
 
       {/* Preview */}
       {previewURL && (
-        <div className="mt-3">
+        <div className="relative mt-2 rounded-lg overflow-hidden border border-gray-300 max-h-[240px]">
           {isImage(file) && (
-            <img
+            <Image
               src={previewURL}
               alt="Preview"
-              className="max-h-[200px] rounded border"
+              width={600}
+              height={400}
+              className="object-contain w-full h-auto"
             />
           )}
           {isVideo(file) && (
             <video
               src={previewURL}
               controls
-              className="max-h-[200px] rounded border"
+              className="w-full h-full object-contain"
             />
           )}
         </div>
@@ -138,12 +157,23 @@ export default function PostForm({ onPostSuccess }: PostFormProps) {
       <button
         type="submit"
         disabled={loading || !content.trim()}
-        className="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
+        className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700 transition disabled:opacity-50"
       >
+        {loading && <Loader2 className="w-4 h-4 animate-spin" />}
         {loading ? "Posting..." : "Post"}
       </button>
 
-      {message && <p className="text-sm mt-2 text-gray-600">{message}</p>}
+      {message && (
+        <p
+          className={`text-sm mt-1 ${
+            message.startsWith("✅")
+              ? "text-green-600"
+              : "text-red-500"
+          }`}
+        >
+          {message}
+        </p>
+      )}
     </form>
   );
 }

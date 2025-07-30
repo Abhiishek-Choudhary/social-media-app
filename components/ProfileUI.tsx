@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import EditProfile from "./EditProfile";
 import MyPosts from "./MyPosts";
+import Image from 'next/image';
 
 interface ProfileUIProps {
   session: {
@@ -80,7 +81,7 @@ export default function ProfileUI({ session, user }: ProfileUIProps) {
 
       <div className="bg-white p-4 shadow rounded mb-6 flex items-center gap-4">
         {user.image && (
-          <img
+          <Image
             src={user.image}
             alt="Profile"
             className="w-16 h-16 rounded-full"

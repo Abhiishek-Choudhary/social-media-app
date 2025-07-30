@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 
 // DELETE post
 export async function DELETE(
-  req: Request,
+  _: Request,
   { params }: { params: { id: string } }
 ) {
   await connectDB();
@@ -12,7 +12,7 @@ export async function DELETE(
   try {
     await Post.findByIdAndDelete(params.id);
     return NextResponse.json({ message: 'Deleted' });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Delete failed' }, { status: 500 });
   }
 }
@@ -32,15 +32,12 @@ export async function PUT(
       { new: true }
     );
     return NextResponse.json(updated);
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Update failed' }, { status: 500 });
   }
 }
 
-// OPTIONAL: add this if needed to prevent route errors
-export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+// GET (not implemented, but included to avoid routing errors)
+export async function GET() {
   return NextResponse.json({ message: 'GET not implemented' });
 }

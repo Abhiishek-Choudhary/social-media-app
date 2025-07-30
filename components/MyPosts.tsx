@@ -18,20 +18,20 @@ export default function MyPosts({ sessionEmail }: { sessionEmail: string }) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchPosts = async () => {
-    try {
-      const res = await fetch(`/api/posts/user/${encodeURIComponent(sessionEmail)}`);
-      if (!res.ok) throw new Error('Failed to fetch user posts');
-      const data = await res.json();
-      setPosts(data);
-    } catch (err) {
-      console.error('Failed to fetch posts:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const res = await fetch(`/api/posts/user/${encodeURIComponent(sessionEmail)}`);
+        if (!res.ok) throw new Error('Failed to fetch user posts');
+        const data = await res.json();
+        setPosts(data);
+      } catch (err) {
+        console.error('Failed to fetch posts:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (sessionEmail) {
       fetchPosts();
     }
@@ -49,7 +49,15 @@ export default function MyPosts({ sessionEmail }: { sessionEmail: string }) {
             key={post._id}
             post={post}
             sessionEmail={sessionEmail}
-            onUpdate={fetchPosts}
+            onUpdate={() => {
+              // Refetch posts on update
+              setLoading(true);
+              fetch(`/api/posts/user/${encodeURIComponent(sessionEmail)}`)
+                .then((res) => res.json())
+                .then(setPosts)
+                .catch((err) => console.error('Failed to refetch posts:', err))
+                .finally(() => setLoading(false));
+            }}
           />
         ))
       )}

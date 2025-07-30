@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
-import PostForm from "./PostForm";
+// import PostForm from "./PostForm";
+import Image from 'next/image';
 
 interface Post {
   _id: string;
@@ -16,7 +17,7 @@ interface Post {
   comments: { userId: string; text: string }[];
 }
 
-export default function Feed({ onPostSuccess }: { onPostSuccess?: () => void }) {
+export default function Feed() {
   const { data: session } = useSession();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -93,9 +94,11 @@ export default function Feed({ onPostSuccess }: { onPostSuccess?: () => void }) 
             <p className="text-gray-900 mb-2 whitespace-pre-wrap">{post.content}</p>
 
             {post.image && !post.video && (
-              <img
+              <Image
                 src={post.image}
                 alt="Post"
+                width={320}
+                height={400}
                 className="rounded max-h-[400px] object-cover w-full mt-2"
               />
             )}

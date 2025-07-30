@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import dynamic from "next/dynamic";
+import Image from "next/image";
 
 const StoryViewer = dynamic(() => import("./StoryViewer"), { ssr: false });
 
@@ -36,8 +37,7 @@ export default function Stories() {
     fetchStories();
   }, [fetchStories]);
 
-  // Optional: expose this function to parent
-  (globalThis as any).reloadStories = fetchStories;
+  globalThis.reloadStories = fetchStories;
 
   return (
     <>
@@ -48,10 +48,12 @@ export default function Stories() {
             className="w-20 text-center cursor-pointer"
             onClick={() => setSelectedUser(userId)}
           >
-            <img
+            <Image
               src={userStories[0]?.mediaUrl}
               alt="story"
-              className="w-16 h-16 rounded-full object-cover"
+              width={64} // match w-16 (64px)
+              height={64} // match h-16 (64px)
+              className="rounded-full object-cover w-16 h-16"
             />
           </div>
         ))}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useSocket } from "@/context/SocketContext";
+import Image from 'next/image';
 
 type Message = {
   sender: string;
@@ -105,7 +106,7 @@ export default function ChatPage() {
             }`}
             onClick={() => setSelectedUser(user)}
           >
-            <img
+            <Image
               src={user.image || "/default-avatar.png"}
               alt={user.username}
               className="w-10 h-10 rounded-full mr-3"
