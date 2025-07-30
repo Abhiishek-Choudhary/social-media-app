@@ -56,7 +56,7 @@ export default function StoryUploader({ userId }: { userId: string }) {
       <input
         type="file"
         accept="image/*,video/*"
-        onChange={(e) => setFile(e.target.files?.[0] || null)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFile(e.target.files?.[0] || null)}
         className="mb-2"
       />
       <button

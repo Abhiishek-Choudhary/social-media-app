@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
-import { useSwipeable } from 'react-swipeable';
+import { useEffect, useRef, useState } from "react";
+import { useSwipeable } from "react-swipeable";
 
 interface Story {
   _id: string;
   userId: string;
   mediaUrl: string;
-  mediaType: 'image' | 'video';
+  mediaType: "image" | "video";
   createdAt: string;
 }
 
@@ -17,7 +17,11 @@ interface StoryViewerProps {
   user: { username?: string; image?: string }; // ✅ new prop
 }
 
-export default function StoryViewer({ stories, onClose, user }: StoryViewerProps) {
+export default function StoryViewer({
+  stories,
+  onClose,
+  user,
+}: StoryViewerProps) {
   const [current, setCurrent] = useState(0);
   const [progress, setProgress] = useState(0); // 0 to 100
   const [muted, setMuted] = useState(true);
@@ -27,10 +31,11 @@ export default function StoryViewer({ stories, onClose, user }: StoryViewerProps
   const duration = 10000; // 10 seconds
 
   useEffect(() => {
-    startTimer();
+    clearTimers(); 
+    startTimer(); 
 
     return () => {
-      clearTimers();
+      clearTimers(); // ✅ Clean up when component unmounts or before next effect
     };
   }, [current]);
 
@@ -41,7 +46,7 @@ export default function StoryViewer({ stories, onClose, user }: StoryViewerProps
 
   const startTimer = () => {
     setProgress(0);
-    let start = Date.now();
+    const start = Date.now();
     intervalRef.current = setInterval(() => {
       const elapsed = Date.now() - start;
       const percent = Math.min((elapsed / duration) * 100, 100);
@@ -103,10 +108,14 @@ export default function StoryViewer({ stories, onClose, user }: StoryViewerProps
         {/* 👤 User Info */}
         <div className="absolute top-4 left-4 flex items-center gap-2 z-20">
           {user?.image && (
-            <img src={user.image} className="w-8 h-8 rounded-full object-cover" />
+            <img
+              src={user.image}
+              alt="user profile"
+              className="w-8 h-8 rounded-full object-cover"
+            />
           )}
           <span className="text-sm font-medium">
-            {user?.username || 'User'}
+            {user?.username || "User"}
           </span>
         </div>
 
@@ -121,10 +130,11 @@ export default function StoryViewer({ stories, onClose, user }: StoryViewerProps
           </button>
 
           <div className="w-72 h-96 bg-black flex items-center justify-center">
-            {story.mediaType === 'image' ? (
+            {story.mediaType === "image" ? (
               <img
                 src={story.mediaUrl}
                 className="w-full h-full object-cover rounded"
+                alt="story"
               />
             ) : (
               <video
