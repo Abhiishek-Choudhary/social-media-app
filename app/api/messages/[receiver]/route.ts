@@ -4,10 +4,7 @@ import { connectDB } from "@/lib/mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import Message from "@/models/Message";
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { receiver: string } }
-) {
+export async function GET(req: NextRequest) {
   await connectDB();
 
   const session = await getServerSession(authOptions);
@@ -15,12 +12,14 @@ export async function GET(
     return NextResponse.json([], { status: 401 });
   }
 
-  const receiverEmail = decodeURIComponent(params.receiver || "");
+  // ✅ Extract 'receiver' param from the URL
+  const receiver = req.nextUrl.pathname.split("/").pop(); // e.g., "receiver"
+  const receiverEmail = decodeURIComponent(receiver || "");
+  const email = session.user.email;
+
   if (!receiverEmail) {
     return NextResponse.json([], { status: 400 });
   }
-
-  const email = session.user.email;
 
   const messages = await Message.find({
     $or: [
