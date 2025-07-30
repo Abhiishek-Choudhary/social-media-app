@@ -4,16 +4,10 @@ import { connectDB } from "@/lib/mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import Message from "@/models/Message";
 
-// ✅ Important for session-based routes
-export const dynamic = "force-dynamic";
-
-type Context = {
-  params: {
-    receiver: string;
-  };
-};
-
-export async function GET(req: NextRequest, context: Context) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { receiver: string } }
+) {
   await connectDB();
 
   const session = await getServerSession(authOptions);
@@ -21,7 +15,11 @@ export async function GET(req: NextRequest, context: Context) {
     return NextResponse.json([], { status: 401 });
   }
 
-  const receiverEmail = decodeURIComponent(context.params.receiver);
+  const receiverEmail = decodeURIComponent(params.receiver || "");
+  if (!receiverEmail) {
+    return NextResponse.json([], { status: 400 });
+  }
+
   const email = session.user.email;
 
   const messages = await Message.find({
