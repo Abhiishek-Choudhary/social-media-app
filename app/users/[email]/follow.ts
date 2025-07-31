@@ -1,30 +1,52 @@
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import User from "@/models/User";
+import { authOptions } from "@/lib/authOptions";
 import { connectDB } from "@/lib/mongodb";
-import { NextResponse } from "next/server";
+import User from "@/models/User";
 
-export async function POST(req: Request, { params }: { params: { email: string } }) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+// ✅ Use correct context typing
+interface Context {
+  params: {
+    email: string;
+  };
+}
 
-  const currentUserEmail = session.user.email;
-  const targetEmail = decodeURIComponent(params.email);
+export async function POST(req: NextRequest, context: Context) {
+  try {
+    const session = await getServerSession(authOptions);
+    const currentUserEmail = session?.user?.email;
 
-  await connectDB();
+    if (!currentUserEmail) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  const user = await User.findOne({ email: targetEmail });
-  const currentUser = await User.findOne({ email: currentUserEmail });
+    const targetEmail = decodeURIComponent(context.params.email);
 
-  if (!user || !currentUser) return NextResponse.json({ error: "User not found" }, { status: 404 });
+    if (currentUserEmail === targetEmail) {
+      return NextResponse.json({ error: "You cannot follow yourself." }, { status: 400 });
+    }
 
-  // Follow
-  if (!user.followers.includes(currentUserEmail)) {
-    user.followers.push(currentUserEmail);
-    currentUser.following.push(targetEmail);
-    await user.save();
-    await currentUser.save();
+    await connectDB();
+
+    const [targetUser, currentUser] = await Promise.all([
+      User.findOne({ email: targetEmail }),
+      User.findOne({ email: currentUserEmail }),
+    ]);
+
+    if (!targetUser || !currentUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    if (!targetUser.followers.includes(currentUserEmail)) {
+      targetUser.followers.push(currentUserEmail);
+      currentUser.following.push(targetEmail);
+
+      await Promise.all([targetUser.save(), currentUser.save()]);
+    }
+
+    return NextResponse.json({ success: true, message: "Followed successfully" });
+  } catch (error) {
+    console.error("Follow route error:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
-
-  return NextResponse.json({ success: true });
 }

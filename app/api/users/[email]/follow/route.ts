@@ -1,16 +1,18 @@
-// app/api/users/[email]/follow/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import User from '@/models/User';
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { email: string } }
-) {
+interface Context {
+  params: {
+    email: string;
+  };
+}
+
+export async function POST(req: NextRequest, context: Context) {
   await connectDB();
 
   const followerEmail = req.nextUrl.searchParams.get("follower");
-  const targetEmail = decodeURIComponent(params.email);
+  const targetEmail = decodeURIComponent(context.params.email);
 
   if (!followerEmail || !targetEmail) {
     return NextResponse.json({ error: "Missing emails" }, { status: 400 });
@@ -24,14 +26,11 @@ export async function POST(
   return NextResponse.json({ message: "Followed successfully" });
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { email: string } }
-) {
+export async function DELETE(req: NextRequest, context: Context) {
   await connectDB();
 
   const followerEmail = req.nextUrl.searchParams.get("follower");
-  const targetEmail = decodeURIComponent(params.email);
+  const targetEmail = decodeURIComponent(context.params.email);
 
   if (!followerEmail || !targetEmail) {
     return NextResponse.json({ error: "Missing emails" }, { status: 400 });
