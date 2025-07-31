@@ -25,7 +25,7 @@ interface PostItemProps {
   onUpdate?: () => void;
 }
 
-export default function PostItem({ post, sessionEmail, onUpdate }: PostItemProps): JSX.Element {
+export default function PostItem({ post, sessionEmail, onUpdate }: PostItemProps) {
   const [editing, setEditing] = useState(false);
   const [newContent, setNewContent] = useState(post.content);
   const [commentText, setCommentText] = useState('');
