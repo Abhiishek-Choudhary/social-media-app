@@ -2,18 +2,30 @@ import { connectDB } from "@/lib/mongodb";
 import Post from "@/models/Post";
 import { NextResponse } from "next/server";
 
+// Define post type structure
+interface LeanPost {
+  _id: any;
+  userId: string;
+  content: string;
+  image?: string;
+  video?: string;
+  likes: number;
+  comments: any[];
+  createdAt: Date;
+}
+
 export async function GET() {
   try {
     await connectDB();
-    
-    const posts = await Post.find().sort({ likes: -1 }).lean(); // Sort by likes
+
+    const posts = (await Post.find().sort({ likes: -1 }).lean()) as unknown as LeanPost[];
 
     const serializedPosts = posts.map((post) => ({
       _id: post._id.toString(),
       userId: post.userId,
       content: post.content,
       image: post.image || null,
-      video: post.video || null,                     // ✅ include video explicitly
+      video: post.video || null,
       likes: post.likes || 0,
       comments: post.comments || [],
       createdAt: post.createdAt.toString(),
@@ -31,7 +43,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const { userId, content, image, video } = await req.json(); // ✅ include video
+    const { userId, content, image, video } = await req.json();
 
     console.log("Saving post with:", { userId, content, image, video });
 
@@ -44,8 +56,8 @@ export async function POST(req: Request) {
     const newPost = await Post.create({
       userId,
       content,
-      image: image || null,   // optional
-      video: video || null,   // ✅ save video if available
+      image: image || null,
+      video: video || null,
     });
 
     return NextResponse.json(newPost, { status: 201 });
@@ -54,4 +66,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
-
