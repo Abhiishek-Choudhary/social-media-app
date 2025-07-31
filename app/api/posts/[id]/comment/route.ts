@@ -4,12 +4,9 @@ import User from "@/models/User";
 import Notification from "@/models/Notification";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(
-  req: Request,
-  { params }: { params: { id: string } } // 👈 must match `[id]` in folder
-) {
+export async function POST(req: NextRequest) {
   await connectDB();
 
   const session = await getServerSession(authOptions);
@@ -19,14 +16,14 @@ export async function POST(
 
   const { text } = await req.json();
   if (!text) {
-    return NextResponse.json(
-      { error: "Missing comment text" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Missing comment text" }, { status: 400 });
   }
 
+  // ✅ Extract post ID from URL
+  const postId = req.nextUrl.pathname.split("/")[3]; // /api/posts/[id]/comment
+
   const post = await Post.findByIdAndUpdate(
-    params.id,
+    postId,
     {
       $push: {
         comments: {
@@ -43,9 +40,7 @@ export async function POST(
     return NextResponse.json({ error: "Post not found" }, { status: 404 });
   }
 
-  // ✅ CORRECT
   const postOwner = await User.findOne({ email: post.userId });
-
   const recipientEmail = postOwner?.email;
 
   if (recipientEmail && recipientEmail !== session.user.email) {
