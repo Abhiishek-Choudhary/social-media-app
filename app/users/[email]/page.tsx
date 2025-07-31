@@ -7,18 +7,17 @@ import User from "@/models/User";
 import ProfileUI from "@/components/ProfileUI";
 import { notFound } from "next/navigation";
 
-// ✅ Explicitly define and export the Page component with correct typing
-interface Props {
-  params: {
-    email: string;
-  };
-}
-
-export default async function UserProfilePage({ params }: Props) {
+// ✅ NO custom interface, NO PageProps — just accept params directly
+export default async function UserProfilePage({
+  params,
+}: {
+  params: Record<string, string>;
+}) {
   await connectDB();
 
   const session = await getServerSession(authOptions);
   const decodedEmail = decodeURIComponent(params.email);
+
   const user = await User.findOne({ email: decodedEmail }).lean();
 
   if (!user) return notFound();
