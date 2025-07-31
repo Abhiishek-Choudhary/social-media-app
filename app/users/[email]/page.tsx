@@ -7,13 +7,24 @@ import User from "@/models/User"
 import ProfileUI from "@/components/ProfileUI"
 import { notFound } from "next/navigation"
 
-export default async function UserProfilePage({ params }: any) {
+interface Props {
+  params: {
+    email: string
+  }
+}
+
+// ✅ add this to silence Next.js static optimization error
+export async function generateStaticParams() {
+  return []
+}
+
+export default async function UserProfilePage({ params }: Props) {
   await connectDB()
 
   const session = await getServerSession(authOptions)
   const decodedEmail = decodeURIComponent(params.email)
-
   const user = await User.findOne({ email: decodedEmail }).lean()
+
   if (!user) return notFound()
 
   const plainUser = JSON.parse(JSON.stringify(user))
