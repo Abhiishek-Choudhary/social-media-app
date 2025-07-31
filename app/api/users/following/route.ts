@@ -4,7 +4,15 @@ import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import { NextResponse } from "next/server";
 
-// /api/users/following/route.ts
+// Define a lean user type if you haven't already
+type LeanUser = {
+  _id: string;
+  email: string;
+  username: string;
+  image?: string;
+  following: string[];
+};
+
 export const GET = async () => {
   await connectDB();
   const session = await getServerSession(authOptions);
@@ -16,23 +24,23 @@ export const GET = async () => {
   const currentUserEmail = session.user.email;
 
   try {
-    // ❗ Find users where *their* email is in *your* following list
-    const currentUser = await User.findOne({ email: currentUserEmail }).lean();
+    const user = await User.findOne({ email: currentUserEmail }).lean();
 
-    if (!currentUser) {
-      console.log("User not found");
+    if (!user || typeof user !== "object") {
+      console.log("User not found or invalid format");
       return NextResponse.json([], { status: 200 });
     }
 
-    const followingEmails = currentUser.following || [];
+    // ✅ Safe assertion through unknown to LeanUser
+    const followingEmails = (user as unknown as LeanUser).following || [];
 
-    console.log("Following emails:", followingEmails); // 👈 Log
+    console.log("Following emails:", followingEmails);
 
     const followingUsers = await User.find({
       email: { $in: followingEmails },
     }).select("email username image");
 
-    console.log("Following Users Found:", followingUsers); // 👈 Log
+    console.log("Following Users Found:", followingUsers);
 
     return NextResponse.json(followingUsers, { status: 200 });
   } catch (error) {
@@ -40,4 +48,3 @@ export const GET = async () => {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 };
-
