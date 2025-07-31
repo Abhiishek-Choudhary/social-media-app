@@ -1,3 +1,4 @@
+// pages/api/socket.ts
 import { NextApiRequest } from "next";
 import { Server as ServerIO } from "socket.io";
 import { NextApiResponseWithSocket } from "@/types/NextApiResponseWithSocket";
@@ -20,7 +21,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponseW
       socket.on("send-message", async ({ sender, receiver, text }) => {
         await connectDB();
 
-        // Save to MongoDB
         const message = await Message.create({ sender, receiver, text });
 
         const room = [sender, receiver].sort().join("-");

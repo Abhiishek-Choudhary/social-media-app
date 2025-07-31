@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useSocket } from "@/context/SocketContext";
-import Image from 'next/image';
+import Image from "next/image";
 
 type Message = {
   sender: string;
@@ -28,13 +28,11 @@ export default function ChatPage() {
   const [text, setText] = useState("");
 
   const currentEmail = session?.user?.email;
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  // ✅ Fetch users I follow
   const fetchFollowingUsers = async () => {
     const res = await fetch("/api/users/following");
     const data = await res.json();
-
-    console.log("Fetched following users:", data); // 👈 Check here
 
     if (Array.isArray(data)) {
       setUsersIFollow(data);
@@ -49,7 +47,6 @@ export default function ChatPage() {
     }
   }, [status]);
 
-  // ✅ Fetch previous messages with selected user
   useEffect(() => {
     if (!selectedUser || !currentEmail) return;
 
@@ -60,7 +57,6 @@ export default function ChatPage() {
       });
   }, [selectedUser, currentEmail]);
 
-  // ✅ Handle real-time receiving messages
   useEffect(() => {
     if (!socket) return;
 
@@ -78,6 +74,10 @@ export default function ChatPage() {
       socket.off("receive-message", handleReceive);
     };
   }, [socket, selectedUser]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const handleSend = () => {
     if (!text.trim() || !selectedUser || !currentEmail) return;
@@ -109,7 +109,9 @@ export default function ChatPage() {
             <Image
               src={user.image || "/default-avatar.png"}
               alt={user.username}
-              className="w-10 h-10 rounded-full mr-3"
+              width={40}
+              height={40}
+              className="rounded-full mr-3"
             />
             <span className="font-medium">{user.username}</span>
           </div>
@@ -136,6 +138,7 @@ export default function ChatPage() {
                   {msg.text}
                 </div>
               ))}
+              <div ref={messagesEndRef} />
             </div>
             <div className="p-3 border-t flex">
               <input
@@ -146,7 +149,8 @@ export default function ChatPage() {
               />
               <button
                 onClick={handleSend}
-                className="bg-blue-500 text-white px-4 rounded"
+                disabled={!text.trim() || !selectedUser}
+                className="bg-blue-500 text-white px-4 rounded disabled:opacity-50"
               >
                 Send
               </button>
