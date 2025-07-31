@@ -4,12 +4,9 @@ import Notification from "@/models/Notification";
 import User from "@/models/User";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(req: NextRequest) {
   await connectDB();
 
   const session = await getServerSession(authOptions);
@@ -19,10 +16,12 @@ export async function POST(
 
   const userEmail = session.user.email;
 
+  // ✅ Extract postId from URL
+  const postId = req.nextUrl.pathname.split("/")[3]; // /api/posts/[id]/like
+
   try {
-    // ✅ Increment likes
     const post = await Post.findByIdAndUpdate(
-      params.id,
+      postId,
       { $inc: { likes: 1 } },
       { new: true }
     );
@@ -31,11 +30,9 @@ export async function POST(
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    // ✅ Get post owner's email using userId (which is stored as email)
-    const postOwner = await User.findOne({ email: post.userId }); // 🔧 FIXED HERE
+    const postOwner = await User.findOne({ email: post.userId }); // Assuming userId is email
     const recipientEmail = postOwner?.email;
 
-    // ✅ Create notification
     if (recipientEmail && recipientEmail !== userEmail) {
       await Notification.create({
         recipientEmail,
@@ -46,8 +43,8 @@ export async function POST(
     }
 
     return NextResponse.json(post);
-  } catch (error) {
-    console.error("Like error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (err) {
+    console.error("LIKE ERROR:", err);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
