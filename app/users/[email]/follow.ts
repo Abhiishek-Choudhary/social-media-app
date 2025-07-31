@@ -1,52 +1,38 @@
-import { NextRequest, NextResponse } from "next/server";
+// app/api/users/[email]/follow/route.ts
+
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
-import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
+import { connectDB } from "@/lib/mongodb";
+import { NextRequest, NextResponse } from "next/server";
 
-// ✅ Use correct context typing
-interface Context {
-  params: {
-    email: string;
-  };
-}
-
-export async function POST(req: NextRequest, context: Context) {
-  try {
-    const session = await getServerSession(authOptions);
-    const currentUserEmail = session?.user?.email;
-
-    if (!currentUserEmail) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const targetEmail = decodeURIComponent(context.params.email);
-
-    if (currentUserEmail === targetEmail) {
-      return NextResponse.json({ error: "You cannot follow yourself." }, { status: 400 });
-    }
-
-    await connectDB();
-
-    const [targetUser, currentUser] = await Promise.all([
-      User.findOne({ email: targetEmail }),
-      User.findOne({ email: currentUserEmail }),
-    ]);
-
-    if (!targetUser || !currentUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    if (!targetUser.followers.includes(currentUserEmail)) {
-      targetUser.followers.push(currentUserEmail);
-      currentUser.following.push(targetEmail);
-
-      await Promise.all([targetUser.save(), currentUser.save()]);
-    }
-
-    return NextResponse.json({ success: true, message: "Followed successfully" });
-  } catch (error) {
-    console.error("Follow route error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+export async function POST(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const currentUserEmail = session.user.email;
+
+  // ✅ Extract email from URL safely
+  const pathParts = req.nextUrl.pathname.split("/");
+  const targetEmail = decodeURIComponent(pathParts[pathParts.length - 2]); // "follow" is last, so email is second last
+
+  await connectDB();
+
+  const user = await User.findOne({ email: targetEmail });
+  const currentUser = await User.findOne({ email: currentUserEmail });
+
+  if (!user || !currentUser) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  if (!user.followers.includes(currentUserEmail)) {
+    user.followers.push(currentUserEmail);
+    currentUser.following.push(targetEmail);
+    await user.save();
+    await currentUser.save();
+  }
+
+  return NextResponse.json({ success: true });
 }
