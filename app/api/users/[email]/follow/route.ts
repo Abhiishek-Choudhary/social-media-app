@@ -1,12 +1,16 @@
+// app/api/users/[email]/follow/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import User from '@/models/User';
 
-export async function POST(req: NextRequest, context: { params: { email: string } }) {
+export async function POST(
+  req: NextRequest,
+  { params }: { params: { email: string } }
+) {
   await connectDB();
 
   const followerEmail = req.nextUrl.searchParams.get("follower");
-  const targetEmail = decodeURIComponent(context.params.email); // ✅ await-like structure
+  const targetEmail = decodeURIComponent(params.email);
 
   if (!followerEmail || !targetEmail) {
     return NextResponse.json({ error: "Missing emails" }, { status: 400 });
@@ -17,14 +21,17 @@ export async function POST(req: NextRequest, context: { params: { email: string 
     { $addToSet: { followers: followerEmail } }
   );
 
-  return NextResponse.json({ message: "Followed successfully" }, { status: 200 });
+  return NextResponse.json({ message: "Followed successfully" });
 }
 
-export async function DELETE(req: NextRequest, context: { params: { email: string } }) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { email: string } }
+) {
   await connectDB();
 
   const followerEmail = req.nextUrl.searchParams.get("follower");
-  const targetEmail = decodeURIComponent(context.params.email); // ✅
+  const targetEmail = decodeURIComponent(params.email);
 
   if (!followerEmail || !targetEmail) {
     return NextResponse.json({ error: "Missing emails" }, { status: 400 });
@@ -35,6 +42,5 @@ export async function DELETE(req: NextRequest, context: { params: { email: strin
     { $pull: { followers: followerEmail } }
   );
 
-  return NextResponse.json({ message: "Unfollowed successfully" }, { status: 200 });
+  return NextResponse.json({ message: "Unfollowed successfully" });
 }
-
