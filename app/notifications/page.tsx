@@ -8,7 +8,7 @@ type Notification = {
   postId: string;
   type: "like" | "comment";
   createdAt: string;
-  commentText?: string; // ✅ Optional comment text
+  commentText?: string;
 };
 
 export default function NotificationsPage() {
@@ -41,7 +41,7 @@ export default function NotificationsPage() {
           {notifications.map((n, index) => (
             <li key={index} className="mb-4 border-b pb-2">
               <div>
-                <strong>{n.senderEmail}</strong>{" "}
+                <strong>{n.sender}</strong>{" "}
                 {n.type === "like"
                   ? "liked your post"
                   : `commented on your post:`}

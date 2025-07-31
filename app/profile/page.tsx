@@ -3,10 +3,11 @@ import { authOptions } from '@/lib/authOptions';
 import { redirect } from 'next/navigation';
 import { connectDB } from '@/lib/mongodb';
 import User from '@/models/User';
-import ProfileUI from '@/components/ProfileUI'; // New client component
+import ProfileUI from '@/components/ProfileUI';
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions);
+
   if (!session?.user?.email) {
     redirect('/api/auth/signin');
   }
@@ -19,9 +20,26 @@ export default async function ProfilePage() {
     { upsert: true, new: true }
   );
 
-  const user = userRaw?.toObject
-    ? { ...userRaw.toObject(), _id: userRaw._id.toString() }
-    : userRaw;
+  if (!userRaw) {
+    redirect('/error');
+  }
 
-  return <ProfileUI session={session} user={user} />;
+  const user = {
+    _id: userRaw._id.toString(),
+    email: userRaw.email,
+    username: userRaw.username || '',
+    bio: userRaw.bio || '',
+    image: userRaw.image || '',
+    followers: userRaw.followers || [], // ✅ Add this line
+  };
+
+  const safeSession = {
+    user: {
+      email: session.user.email!,
+      name: session.user.name || '',
+      image: session.user.image || '',
+    },
+  };
+
+  return <ProfileUI session={safeSession} user={user} />;
 }

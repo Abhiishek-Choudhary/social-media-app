@@ -1,21 +1,46 @@
-// app/users/[email]/page.tsx
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/authOptions';
+import { redirect } from 'next/navigation';
+import { connectDB } from '@/lib/mongodb';
+import User from '@/models/User';
+import ProfileUI from '@/components/ProfileUI';
+import type { LeanUser } from '@/types/User';
 
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/authOptions"
-import { connectDB } from "@/lib/mongodb"
-import User from "@/models/User"
-import ProfileUI from "@/components/ProfileUI"
-import { notFound } from "next/navigation"
+export default async function ProfilePage() {
+  const session = await getServerSession(authOptions);
 
-export default async function UserProfilePage({ params }: any) {
-  await connectDB()
+  if (!session?.user?.email) {
+    redirect('/api/auth/signin');
+  }
 
-  const session = await getServerSession(authOptions)
-  const decodedEmail = decodeURIComponent(params.email)
+  await connectDB();
 
-  const user = await User.findOne({ email: decodedEmail }).lean()
-  if (!user) return notFound()
+  const userRaw = await User.findOneAndUpdate(
+    { email: session.user.email },
+    { $setOnInsert: { email: session.user.email } },
+    { upsert: true, new: true }
+  );
 
-  const plainUser = JSON.parse(JSON.stringify(user))
-  return <ProfileUI session={session} user={plainUser} />
+  if (!userRaw) {
+    redirect('/error');
+  }
+
+  const user: LeanUser = {
+    _id: userRaw._id.toString(),
+    email: userRaw.email,
+    username: userRaw.username || '',
+    bio: userRaw.bio || '',
+    image: userRaw.image || '',
+    followers: userRaw.followers || [],
+  };
+
+  const safeSession = {
+    user: {
+      email: session.user.email!,
+      name: session.user.name ?? '',
+      image: session.user.image ?? '',
+    },
+  };
+
+  return <ProfileUI session={safeSession} user={user} />;
 }
